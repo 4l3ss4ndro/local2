@@ -43,6 +43,12 @@
 #include "wmediumd_dynamic.h"
 #include "wserver_messages.h"
 
+#include <string.h>	//strlen
+#include <sys/socket.h>	//socket
+#include <arpa/inet.h>	//inet_addr
+
+int socket_to_global;
+
 static inline int div_round(int a, int b)
 {
 	return (a + b - 1) / b;
@@ -753,8 +759,27 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct frame *frame;
 	struct ieee80211_hdr *hdr;
 	u8 *src;
+	sock_w = socket_to_global;
+	char message[1000] , server_reply[2000];
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
+		//Send data to global wmediumd
+		if( send(sock_w , message , strlen(message) , 0) < 0)
+		{
+			puts("Send failed");
+			return 1;
+		}
+		
+		//Receive a reply from the server
+		if( recv(sock_w , server_reply , 2000 , 0) < 0)
+		{
+			puts("recv failed");
+			break;
+		}
+		
+		puts("Server reply :");
+		puts(server_reply);
+		
 		pthread_rwlock_rdlock(&snr_lock);
 		/* we get the attributes*/
 		genlmsg_parse(nlh, 0, attrs, HWSIM_ATTR_MAX, NULL);
@@ -944,6 +969,10 @@ int main(int argc, char *argv[])
 	struct wmediumd ctx;
 	char *config_file = NULL;
 	char *per_file = NULL;
+		
+	int sock;
+	struct sockaddr_in server;
+
 
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
@@ -1031,6 +1060,31 @@ int main(int argc, char *argv[])
 	INIT_LIST_HEAD(&ctx.stations);
 	if (load_config(&ctx, config_file, per_file, full_dynamic))
 		return EXIT_FAILURE;
+	
+	/*Socket client opens*/
+	
+	//Create socket
+	sock = socket(AF_INET , SOCK_STREAM , 0);
+	if (sock == -1)
+	{
+		printf("Could not create socket");
+	}
+	else
+		socket_to_global = sock;
+	puts("Socket created");
+	
+	server.sin_addr.s_addr = inet_addr("127.0.0.1"); //set global wmediumd machine address
+	server.sin_family = AF_INET;
+	server.sin_port = htons( 8888 );
+
+	//Connect to remote server
+	if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)
+	{
+		perror("connect failed. Error");
+		return 1;
+	}
+	
+	puts("Connected with global wmediumd\n");
 
 	/* init libevent */
 	event_init();
@@ -1069,6 +1123,8 @@ int main(int argc, char *argv[])
 	free(ctx.cb);
 	free(ctx.intf);
 	free(ctx.per_matrix);
-
+	
+	close(sock);
+	
 	return EXIT_SUCCESS;
 }
