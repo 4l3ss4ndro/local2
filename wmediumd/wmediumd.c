@@ -47,7 +47,7 @@
 #include <sys/socket.h>	//socket
 #include <arpa/inet.h>	//inet_addr
 
-int socket_to_global;
+int socket_to_global = 0;
 
 static inline int div_round(int a, int b)
 {
@@ -763,46 +763,30 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	char message[1000] , server_reply[2000];
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
-		//Send data to global wmediumd
-		if( send(sock_w , message , strlen(message) , 0) < 0)
-		{
-			puts("Send failed");
-			return 1;
-		}
-		
-		//Receive a reply from the server
-		if( recv(sock_w , server_reply , 2000 , 0) < 0)
-		{
-			puts("recv failed");
-			break;
-		}
-		
-		puts("Server reply :");
-		puts(server_reply);
 		
 		pthread_rwlock_rdlock(&snr_lock);
 		/* we get the attributes*/
 		genlmsg_parse(nlh, 0, attrs, HWSIM_ATTR_MAX, NULL);
 		if (attrs[HWSIM_ATTR_ADDR_TRANSMITTER]) {
-			u8 *hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]);
+			u8 *hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]); //mac address of tx sta // TO SEND
 
 			unsigned int data_len =
-				nla_len(attrs[HWSIM_ATTR_FRAME]);
-			char *data = (char *)nla_data(attrs[HWSIM_ATTR_FRAME]);
+				nla_len(attrs[HWSIM_ATTR_FRAME]); //TO SEND------------------------------------
+			char *data = (char *)nla_data(attrs[HWSIM_ATTR_FRAME]); //data array
 			unsigned int flags =
-				nla_get_u32(attrs[HWSIM_ATTR_FLAGS]);
+				nla_get_u32(attrs[HWSIM_ATTR_FLAGS]); //TO SEND--------------------------------
 			unsigned int tx_rates_len =
-				nla_len(attrs[HWSIM_ATTR_TX_INFO]);
+				nla_len(attrs[HWSIM_ATTR_TX_INFO]); //TO SEND----------------------------------
 			struct hwsim_tx_rate *tx_rates =
 				(struct hwsim_tx_rate *)
 				nla_data(attrs[HWSIM_ATTR_TX_INFO]);
-			u64 cookie = nla_get_u64(attrs[HWSIM_ATTR_COOKIE]);
-			u32 freq;
+			u64 cookie = nla_get_u64(attrs[HWSIM_ATTR_COOKIE]); //TO SEND--------------------------
+			u32 freq; //TO SEND--------------------------------------------------------------------
 			freq = attrs[HWSIM_ATTR_FREQ] ?
-					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412;
+					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412; //TO SEND------------------
 
-			hdr = (struct ieee80211_hdr *)data;
-			src = hdr->addr2;
+			hdr = (struct ieee80211_hdr *)data; //SEND DEFERENCED DATA-----------------------------
+			src = hdr->addr2; //here goes the sender address
 
 			if (data_len < 6 + 6 + 4)
 				goto out;
@@ -829,7 +813,24 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				tx_rates_len / sizeof(struct hwsim_tx_rate);
 			memcpy(frame->tx_rates, tx_rates,
 			       min(tx_rates_len, sizeof(frame->tx_rates)));
-			queue_frame(ctx, sender, frame);
+			//queue_frame(ctx, sender, frame);
+			
+			//Send data to global wmediumd
+			if( send(sock_w , message , strlen(message) , 0) < 0)
+			{
+				puts("Send failed");
+				return 1;
+			}
+
+			//Receive a reply from the server
+			if( recv(sock_w , server_reply , 2000 , 0) < 0)
+			{
+				puts("recv failed");
+				break;
+			}
+
+			puts("Server reply :");
+			puts(server_reply);
 		}
 out:
 		pthread_rwlock_unlock(&snr_lock);
