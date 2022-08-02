@@ -759,7 +759,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct frame *frame;
 	struct ieee80211_hdr *hdr;
 	u8 *src;
-	sock_w = socket_to_global;
+	int sock_w = socket_to_global;
 	char message[1000] , server_reply[2000];
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
@@ -781,7 +781,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				(struct hwsim_tx_rate *)
 				nla_data(attrs[HWSIM_ATTR_TX_INFO]);
 			u64 cookie = nla_get_u64(attrs[HWSIM_ATTR_COOKIE]); //TO SEND--------------------------
-			u32 freq; //TO SEND--------------------------------------------------------------------
+			u32 freq; 
 			freq = attrs[HWSIM_ATTR_FREQ] ?
 					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412; //TO SEND------------------
 
@@ -791,7 +791,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			if (data_len < 6 + 6 + 4)
 				goto out;
 
-			sender = get_station_by_addr(ctx, src);
+			sender = get_station_by_addr(ctx, src); //can be found in the global wmediumd
 			if (!sender) {
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
@@ -828,9 +828,33 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				puts("recv failed");
 				break;
 			}
+			else if() //if this is the tx sta //receiving frame
+			{
+				send_tx_info_frame_nl(ctx, frame);
 
-			puts("Server reply :");
-			puts(server_reply);
+				free(frame);
+			}
+			else if() //if this is the rx sta //receiving frame and station
+			{
+				send_cloned_frame_msg(ctx, station,
+						      frame->data,
+						      frame->data_len,
+						      rate_idx, signal,
+						      frame->freq);
+					
+				free(frame);
+			}
+			else if() //if this is the rx sta //receiving frame and station and signal
+			{
+				send_cloned_frame_msg(ctx, station,
+						      frame->data,
+						      frame->data_len,
+						      rate_idx, frame->signal,
+						      frame->freq);
+				
+				free(frame);
+			}
+
 		}
 out:
 		pthread_rwlock_unlock(&snr_lock);
