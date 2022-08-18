@@ -748,6 +748,19 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
  */
 static int process_messages_cb(struct nl_msg *msg, void *arg)
 {
+	typedef struct{
+		u64 cookie_tosend;
+		u32 freq_tosend;
+		int flags_tosend;
+		int signal_tosend;
+		int duration_tosend;
+		int tx_rates_count_tosend;
+		//add sender
+		size_t data_len_tosend;
+		u8 data_tosend[0];
+	} mystruct_tosend;
+	mystruct_tosend message;
+	
 	struct wmediumd *ctx = arg;
 	struct nlattr *attrs[HWSIM_ATTR_MAX+1];
 	/* netlink header */
@@ -760,7 +773,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct ieee80211_hdr *hdr;
 	u8 *src;
 	int sock_w = socket_to_global;
-	char message[1000] , server_reply[2000];
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
@@ -816,14 +828,14 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			//queue_frame(ctx, sender, frame);
 			
 			//Send data to global wmediumd
-			if( send(sock_w , message , strlen(message) , 0) < 0)
+			if( send(sock_w , (char*)&message , sizeof(mystruct_tosend) , 0) < 0)
 			{
 				puts("Send failed");
 				return 1;
 			}
 
 			//Receive a reply from the server
-			if( recv(sock_w , server_reply , 2000 , 0) < 0)
+			if( recv(sock_w , (char*)&server_reply , sizeof(mystruct_torecv) , 0) < 0)
 			{
 				puts("recv failed");
 				break;
