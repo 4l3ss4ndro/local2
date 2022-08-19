@@ -752,12 +752,11 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		u64 cookie_tosend;
 		u32 freq_tosend;
 		int flags_tosend;
-		int signal_tosend;
-		int duration_tosend;
 		int tx_rates_count_tosend;
-		//add sender
+		struct hwsim_tx_rate tx_rates_tosend[IEEE80211_TX_MAX_RATES];
 		size_t data_len_tosend;
 		u8 data_tosend[0];
+		u8 hwaddr_tosend[ETH_ALEN];
 	} mystruct_tosend;
 	mystruct_tosend message;
 	
@@ -780,24 +779,24 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		/* we get the attributes*/
 		genlmsg_parse(nlh, 0, attrs, HWSIM_ATTR_MAX, NULL);
 		if (attrs[HWSIM_ATTR_ADDR_TRANSMITTER]) {
-			u8 *hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]); //mac address of tx sta // TO SEND
+			u8 *hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]); //mac address of tx sta
 
 			unsigned int data_len =
-				nla_len(attrs[HWSIM_ATTR_FRAME]); //TO SEND------------------------------------
+				nla_len(attrs[HWSIM_ATTR_FRAME]);
 			char *data = (char *)nla_data(attrs[HWSIM_ATTR_FRAME]); //data array
 			unsigned int flags =
-				nla_get_u32(attrs[HWSIM_ATTR_FLAGS]); //TO SEND--------------------------------
+				nla_get_u32(attrs[HWSIM_ATTR_FLAGS]);
 			unsigned int tx_rates_len =
-				nla_len(attrs[HWSIM_ATTR_TX_INFO]); //TO SEND----------------------------------
+				nla_len(attrs[HWSIM_ATTR_TX_INFO]);
 			struct hwsim_tx_rate *tx_rates =
 				(struct hwsim_tx_rate *)
 				nla_data(attrs[HWSIM_ATTR_TX_INFO]);
-			u64 cookie = nla_get_u64(attrs[HWSIM_ATTR_COOKIE]); //TO SEND--------------------------
+			u64 cookie = nla_get_u64(attrs[HWSIM_ATTR_COOKIE]);
 			u32 freq; 
 			freq = attrs[HWSIM_ATTR_FREQ] ?
-					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412; //TO SEND------------------
+					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412;
 
-			hdr = (struct ieee80211_hdr *)data; //SEND DEFERENCED DATA-----------------------------
+			hdr = (struct ieee80211_hdr *)data;
 			src = hdr->addr2; //here goes the sender address
 
 			if (data_len < 6 + 6 + 4)
@@ -808,23 +807,21 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
 			}
-			memcpy(sender->hwaddr, hwaddr, ETH_ALEN);
+			memcpy(message->hwaddr_tosend, hwaddr, ETH_ALEN);
 
-			frame = malloc(sizeof(*frame) + data_len);
+			message = malloc(sizeof(*message) + data_len);
 			if (!frame)
 				goto out;
 
-			memcpy(frame->data, data, data_len);
-			frame->data_len = data_len;
-			frame->flags = flags;
-			frame->cookie = cookie;
-			frame->freq = freq;
-			frame->sender = sender;
-			sender->freq = freq;
-			frame->tx_rates_count =
+			memcpy(frame->data_tosend, data, data_len);
+			message->data_len_tosend = data_len;
+			message->flags_tosend = flags;
+			message->cookie_tosend = cookie;
+			message->freq_tosend = freq;
+			message->tx_rates_count_tosend =
 				tx_rates_len / sizeof(struct hwsim_tx_rate);
-			memcpy(frame->tx_rates, tx_rates,
-			       min(tx_rates_len, sizeof(frame->tx_rates)));
+			memcpy(message->tx_rates_tosend, tx_rates,
+			       min(tx_rates_len, sizeof(message->tx_rates_tosend)));
 			//queue_frame(ctx, sender, frame);
 			
 			//Send data to global wmediumd
