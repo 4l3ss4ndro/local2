@@ -814,7 +814,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			if (!frame)
 				goto out;
 
-			memcpy(frame->data_tosend, data, data_len);
+			memcpy(message->data_tosend, data, data_len);
 			message->data_len_tosend = data_len;
 			message->flags_tosend = flags;
 			message->cookie_tosend = cookie;
