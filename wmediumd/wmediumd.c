@@ -773,6 +773,20 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct ieee80211_hdr *hdr;
 	u8 *src;
 	int sock_w = socket_to_global;
+	
+	typedef struct{
+		u64 cookie_tosend;
+		u32 freq_tosend;
+		int flags_tosend;
+		int tx_rates_count_tosend;
+		struct hwsim_tx_rate tx_rates_tosend[IEEE80211_TX_MAX_RATES];
+		size_t data_len_tosend;
+		u8 data_tosend[0];
+		int rate_idx_tosend;
+		int signal_tosend;
+		int fsignal_tosend;
+	} mystruct_torecv;
+	mystruct_torecv server_reply;
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
@@ -838,33 +852,44 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				puts("recv failed");
 				break;
 			}
-			else if() //if this is the tx sta //receiving frame
-			{
-				send_tx_info_frame_nl(ctx, frame);
+			else{
+				memcpy(frame->data, server_reply->data_tosend, server_reply->data_len_tosend);
+				frame->data_len = server_reply->data_len;
+				frame->flags = server_reply->flags;
+				frame->cookie = server_reply->cookie;
+				frame->freq = server_reply->freq;
+				int rate_idx = server_reply->rate_idx_tosend;
+				int signal = server_reply->signal_tosend;
+				frame->signal = server_reply->signal;
+				frame->tx_rates_count = server_reply->tx_rates_count_tosend;
+				memcpy(frame->tx_rates, server_reply->tx_rates, sizeof(server_reply->tx_rates_tosend));
+				if() //if this is the tx sta //receiving frame
+				{
+					send_tx_info_frame_nl(ctx, frame);
 
-				free(frame);
-			}
-			else if() //if this is the rx sta //receiving frame and station
-			{
-				send_cloned_frame_msg(ctx, station,
-						      frame->data,
-						      frame->data_len,
-						      rate_idx, signal,
-						      frame->freq);
-					
-				free(frame);
-			}
-			else if() //if this is the rx sta //receiving frame and station and signal
-			{
-				send_cloned_frame_msg(ctx, station,
-						      frame->data,
-						      frame->data_len,
-						      rate_idx, frame->signal,
-						      frame->freq);
-				
-				free(frame);
-			}
+					free(frame);
+				}
+				else if() //if this is the rx sta //receiving frame and station
+				{
+					send_cloned_frame_msg(ctx, station,
+							      frame->data,
+							      frame->data_len,
+							      rate_idx, signal,
+							      frame->freq);
 
+					free(frame);
+				}
+				else if() //if this is the rx sta //receiving frame and station and signal
+				{
+					send_cloned_frame_msg(ctx, station,
+							      frame->data,
+							      frame->data_len,
+							      rate_idx, frame->signal,
+							      frame->freq);
+
+					free(frame);
+				}
+			}
 		}
 out:
 		pthread_rwlock_unlock(&snr_lock);
