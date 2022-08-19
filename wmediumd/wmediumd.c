@@ -757,6 +757,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		size_t data_len_tosend;
 		u8 data_tosend[0];
 		u8 hwaddr_tosend[ETH_ALEN];
+		u8 src_tosend;
 	} mystruct_tosend;
 	mystruct_tosend message;
 	
@@ -797,12 +798,12 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412;
 
 			hdr = (struct ieee80211_hdr *)data;
-			src = hdr->addr2; //here goes the sender address
+			src_tosend = hdr->addr2; //here goes the sender address
 
 			if (data_len < 6 + 6 + 4)
 				goto out;
 
-			sender = get_station_by_addr(ctx, src); //can be found in the global wmediumd
+			sender = get_station_by_addr(ctx, src_tosend); //can be found in the global wmediumd
 			if (!sender) {
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
