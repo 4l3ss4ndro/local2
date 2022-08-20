@@ -785,6 +785,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		int rate_idx_tosend;
 		int signal_tosend;
 		int fsignal_tosend;
+		int flag;
 	} mystruct_torecv;
 	mystruct_torecv server_reply;
 
@@ -860,35 +861,13 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				frame->freq = server_reply->freq;
 				int rate_idx = server_reply->rate_idx_tosend;
 				int signal = server_reply->signal_tosend;
-				frame->signal = server_reply->signal;
+				frame->signal = server_reply->fsignal_tosend;
 				frame->tx_rates_count = server_reply->tx_rates_count_tosend;
 				memcpy(frame->tx_rates, server_reply->tx_rates, sizeof(server_reply->tx_rates_tosend));
-				if() //if this is the tx sta //receiving frame
-				{
-					send_tx_info_frame_nl(ctx, frame);
 
-					free(frame);
-				}
-				else if() //if this is the rx sta //receiving frame and station
-				{
-					send_cloned_frame_msg(ctx, station,
-							      frame->data,
-							      frame->data_len,
-							      rate_idx, signal,
-							      frame->freq);
-
-					free(frame);
-				}
-				else if() //if this is the rx sta //receiving frame and station and signal
-				{
-					send_cloned_frame_msg(ctx, station,
-							      frame->data,
-							      frame->data_len,
-							      rate_idx, frame->signal,
-							      frame->freq);
-
-					free(frame);
-				}
+				send_tx_info_frame_nl(ctx, frame);
+				free(frame);
+				
 			}
 		}
 out:
