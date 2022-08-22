@@ -855,15 +855,15 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			}
 			else{
 				memcpy(frame->data, server_reply->data_tosend, server_reply->data_len_tosend);
-				frame->data_len = server_reply->data_len;
-				frame->flags = server_reply->flags;
-				frame->cookie = server_reply->cookie;
-				frame->freq = server_reply->freq;
+				frame->data_len = server_reply->data_len_tosend;
+				frame->flags = server_reply->flags_tosend;
+				frame->cookie = server_reply->cookie_tosend;
+				frame->freq = server_reply->freq_tosend;
 				int rate_idx = server_reply->rate_idx_tosend;
 				int signal = server_reply->signal_tosend;
 				frame->signal = server_reply->fsignal_tosend;
 				frame->tx_rates_count = server_reply->tx_rates_count_tosend;
-				memcpy(frame->tx_rates, server_reply->tx_rates, sizeof(server_reply->tx_rates_tosend));
+				memcpy(frame->tx_rates, server_reply->tx_rates_tosend, sizeof(server_reply->tx_rates_tosend));
 
 				send_tx_info_frame_nl(ctx, frame);
 				free(frame);
