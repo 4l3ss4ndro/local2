@@ -1112,7 +1112,7 @@ int main(int argc, char *argv[])
 		socket_to_global = sock;
 	puts("Socket created");
 	
-	server.sin_addr.s_addr = inet_addr("127.0.0.1"); //set global wmediumd machine address
+	server.sin_addr.s_addr = inet_addr("10.0.0.2"); //set global wmediumd machine address
 	server.sin_family = AF_INET;
 	server.sin_port = htons( 8888 );
 
