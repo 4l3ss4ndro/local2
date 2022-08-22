@@ -813,19 +813,19 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 					nla_get_u32(attrs[HWSIM_ATTR_FREQ]) : 2412;
 
 			hdr = (struct ieee80211_hdr *)data;
-			src_tosend = hdr->addr2; //here goes the sender address
 
 			if (data_len < 6 + 6 + 4)
 				goto out;
-
+			message = malloc(sizeof(*message) + data_len);
+			
+			message->src_tosend = hdr->addr2; //here goes the sender address
 			sender = get_station_by_addr(ctx, src_tosend); //can be found in the global wmediumd
 			if (!sender) {
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
 			}
 			memcpy(message->hwaddr_tosend, hwaddr, ETH_ALEN);
-
-			message = malloc(sizeof(*message) + data_len);
+			
 			if (!frame)
 				goto out;
 
@@ -838,7 +838,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				tx_rates_len / sizeof(struct hwsim_tx_rate);
 			memcpy(message->tx_rates_tosend, tx_rates,
 			       min(tx_rates_len, sizeof(message->tx_rates_tosend)));
-			//queue_frame(ctx, sender, frame);
+			//queue_frame(ctx, sender, frame); done in global wmediumd
 			
 			//Send data to global wmediumd
 			if( send(sock_w , (char*)&message , sizeof(mystruct_tosend) , 0) < 0)
