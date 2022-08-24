@@ -818,26 +818,26 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				goto out;
 			message = malloc(sizeof(*message) + data_len);
 			
-			message->src_tosend = hdr->addr2; //here goes the sender address
-			sender = get_station_by_addr(ctx, src_tosend); //can be found in the global wmediumd
+			message.src_tosend = hdr->addr2; //here goes the sender address
+			sender = get_station_by_addr(ctx, message.src_tosend); //can be found in the global wmediumd
 			if (!sender) {
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
 			}
-			memcpy(message->hwaddr_tosend, hwaddr, ETH_ALEN);
+			memcpy(message.hwaddr_tosend, hwaddr, ETH_ALEN);
 			
 			if (!frame)
 				goto out;
 
-			memcpy(message->data_tosend, data, data_len);
-			message->data_len_tosend = data_len;
-			message->flags_tosend = flags;
-			message->cookie_tosend = cookie;
-			message->freq_tosend = freq;
-			message->tx_rates_count_tosend =
+			memcpy(message.data_tosend, data, data_len);
+			message.data_len_tosend = data_len;
+			message.flags_tosend = flags;
+			message.cookie_tosend = cookie;
+			message.freq_tosend = freq;
+			message.tx_rates_count_tosend =
 				tx_rates_len / sizeof(struct hwsim_tx_rate);
-			memcpy(message->tx_rates_tosend, tx_rates,
-			       min(tx_rates_len, sizeof(message->tx_rates_tosend)));
+			memcpy(message.tx_rates_tosend, tx_rates,
+			       min(tx_rates_len, sizeof(message.tx_rates_tosend)));
 			//queue_frame(ctx, sender, frame); done in global wmediumd
 			
 			//Send data to global wmediumd
@@ -854,16 +854,16 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				break;
 			}
 			else{
-				memcpy(frame->data, server_reply->data_tosend, server_reply->data_len_tosend);
-				frame->data_len = server_reply->data_len_tosend;
-				frame->flags = server_reply->flags_tosend;
-				frame->cookie = server_reply->cookie_tosend;
-				frame->freq = server_reply->freq_tosend;
-				int rate_idx = server_reply->rate_idx_tosend;
-				int signal = server_reply->signal_tosend;
-				frame->signal = server_reply->fsignal_tosend;
-				frame->tx_rates_count = server_reply->tx_rates_count_tosend;
-				memcpy(frame->tx_rates, server_reply->tx_rates_tosend, sizeof(server_reply->tx_rates_tosend));
+				memcpy(frame->data, server_reply.data_tosend, server_reply.data_len_tosend);
+				frame->data_len = server_reply.data_len_tosend;
+				frame->flags = server_reply.flags_tosend;
+				frame->cookie = server_reply.cookie_tosend;
+				frame->freq = server_reply.freq_tosend;
+				int rate_idx = server_reply.rate_idx_tosend;
+				int signal = server_reply.signal_tosend;
+				frame->signal = server_reply.fsignal_tosend;
+				frame->tx_rates_count = server_reply.tx_rates_count_tosend;
+				memcpy(frame->tx_rates, server_reply.tx_rates_tosend, sizeof(server_reply.tx_rates_tosend));
 
 				send_tx_info_frame_nl(ctx, frame);
 				free(frame);
