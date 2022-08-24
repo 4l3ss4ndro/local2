@@ -816,7 +816,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 
 			if (data_len < 6 + 6 + 4)
 				goto out;
-			message = malloc(sizeof(*message) + data_len);
+			frame = malloc(sizeof(*frame) + data_len);
 			
 			message.src_tosend = hdr->addr2; //here goes the sender address
 			sender = get_station_by_addr(ctx, message.src_tosend); //can be found in the global wmediumd
@@ -851,7 +851,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			if( recv(sock_w , (char*)&server_reply , sizeof(mystruct_torecv) , 0) < 0)
 			{
 				puts("recv failed");
-				break;
+				return 1;
 			}
 			else{
 				memcpy(frame->data, server_reply.data_tosend, server_reply.data_len_tosend);
