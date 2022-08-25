@@ -748,7 +748,7 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
  */
 static int process_messages_cb(struct nl_msg *msg, void *arg)
 {
-	typedef struct{
+	/*typedef struct{
 		u64 cookie_tosend;
 		u32 freq_tosend;
 		int flags_tosend;
@@ -759,7 +759,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		u8 hwaddr_tosend[ETH_ALEN];
 		u8 src_tosend;
 	} mystruct_tosend;
-	mystruct_tosend message;
+	mystruct_tosend message;*/
 	
 	struct wmediumd *ctx = arg;
 	struct nlattr *attrs[HWSIM_ATTR_MAX+1];
@@ -767,7 +767,22 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct nlmsghdr *nlh = nlmsg_hdr(msg);
 	/* generic netlink header*/
 	struct genlmsghdr *gnlh = nlmsg_data(nlh);
-
+	
+	typedef struct{
+		__u32 	nlmsg_len_t;
+		__u16 	nlmsg_type_t;
+ 		__u16 	nlmsg_flags_t;
+ 		__u32 	nlmsg_seq_t;
+ 		__u32 	nlmsg_pid_t;
+	} mystruct_tosend;
+	mystruct_tosend message;
+	
+	message.nlmsg_len_t = nlh -> nlmsg_len;
+	message.nlmsg_type_t = nlh -> nlmsg_type;
+	message.nlmsg_flags_t = nlh -> nlmsg_flags;
+	message.nlmsg_seq_t = nlh -> nlmsg_seq;
+	message.nlmsg_pid_t = nlh -> nlmsg_pid;
+	
 	struct station *sender;
 	struct frame *frame;
 	struct ieee80211_hdr *hdr;
@@ -818,18 +833,18 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				goto out;
 			frame = malloc(sizeof(*frame) + data_len);
 			
-			message.src_tosend = hdr->addr2; //here goes the sender address
-			sender = get_station_by_addr(ctx, message.src_tosend); //can be found in the global wmediumd
+			src = hdr->addr2; //here goes the sender address
+			sender = get_station_by_addr(ctx, src); //can be found in the global wmediumd
 			if (!sender) {
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
 			}
-			memcpy(message.hwaddr_tosend, hwaddr, ETH_ALEN);
+			//memcpy(message.hwaddr_tosend, hwaddr, ETH_ALEN);
 			
 			if (!frame)
 				goto out;
 
-			memcpy(message.data_tosend, data, data_len);
+			/*memcpy(message.data_tosend, data, data_len);
 			message.data_len_tosend = data_len;
 			message.flags_tosend = flags;
 			message.cookie_tosend = cookie;
@@ -837,7 +852,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			message.tx_rates_count_tosend =
 				tx_rates_len / sizeof(struct hwsim_tx_rate);
 			memcpy(message.tx_rates_tosend, tx_rates,
-			       min(tx_rates_len, sizeof(message.tx_rates_tosend)));
+			       min(tx_rates_len, sizeof(message.tx_rates_tosend)));*/
 			//queue_frame(ctx, sender, frame); done in global wmediumd
 			
 			//Send data to global wmediumd
