@@ -791,16 +791,10 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	
 	typedef struct{
 		u64 cookie_tosend;
-		u32 freq_tosend;
 		int flags_tosend;
 		int tx_rates_count_tosend;
 		struct hwsim_tx_rate tx_rates_tosend[IEEE80211_TX_MAX_RATES];
-		size_t data_len_tosend;
-		u8 data_tosend[0];
-		int rate_idx_tosend;
 		int signal_tosend;
-		int fsignal_tosend;
-		int flag;
 	} mystruct_torecv;
 	mystruct_torecv server_reply;
 
@@ -869,20 +863,14 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				return 1;
 			}
 			else{
-				memcpy(frame->data, server_reply.data_tosend, server_reply.data_len_tosend);
-				frame->data_len = server_reply.data_len_tosend;
 				frame->flags = server_reply.flags_tosend;
 				frame->cookie = server_reply.cookie_tosend;
-				frame->freq = server_reply.freq_tosend;
-				int rate_idx = server_reply.rate_idx_tosend;
-				int signal = server_reply.signal_tosend;
-				frame->signal = server_reply.fsignal_tosend;
+				signal = server_reply.signal_tosend;
 				frame->tx_rates_count = server_reply.tx_rates_count_tosend;
 				memcpy(frame->tx_rates, server_reply.tx_rates_tosend, sizeof(server_reply.tx_rates_tosend));
-
+				
 				send_tx_info_frame_nl(ctx, frame);
 				free(frame);
-				
 			}
 		}
 out:
