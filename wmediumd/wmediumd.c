@@ -769,19 +769,39 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct genlmsghdr *gnlh = nlmsg_data(nlh);
 	
 	typedef struct{
-		__u32 	nlmsg_len_t;
-		__u16 	nlmsg_type_t;
- 		__u16 	nlmsg_flags_t;
- 		__u32 	nlmsg_seq_t;
- 		__u32 	nlmsg_pid_t;
+		 __u32 nlmsg_len;
+		 __u16 nlmsg_type;
+		 __u16 nlmsg_flags;
+		 __u32 nlmsg_seq;
+		 __u32 nlmsg_pid;
+		 uint32_t nlmsg_len;
+		 uint16_t nlmsg_type;
+		 uint16_t nlmsg_flags;
+		 uint32_t nlmsg_seq;
+		 uint32_t nlmsg_pid;
+	} nlmsghdr_t;
+	
+	typedef struct{
+		int nm_protocol_t;
+		int nm_flags_t;
+ 		struct sockaddr_nl nm_src_t;
+ 		struct sockaddr_nl nm_dst_t;
+ 		struct ucred nm_creds_t;
+ 		struct nlmsghdr_t nm_nlh_t;
+ 		size_t nm_size_t;
+ 		int nm_refcnt_t;
 	} mystruct_tosend;
 	mystruct_tosend message;
+
 	
-	message.nlmsg_len_t = nlh -> nlmsg_len;
-	message.nlmsg_type_t = nlh -> nlmsg_type;
-	message.nlmsg_flags_t = nlh -> nlmsg_flags;
-	message.nlmsg_seq_t = nlh -> nlmsg_seq;
-	message.nlmsg_pid_t = nlh -> nlmsg_pid;
+	message.nm_protocol_t = msg -> nm_protocol;
+	message.nm_flags_t = msg -> nm_flags;
+	message.nm_size_t = msg -> nm_size;
+	message.nm_refcnt_t = msg -> nm_refcnt;
+	memcpy(&message.nm_src_t, msg -> nm_src, sizeof(message.nm_src_t));
+	memcpy(&message.nm_dst_t, msg -> nm_dst, sizeof(message.nm_dst_t));
+	memcpy(&message.nm_creds_t, msg -> nm_creds, sizeof(message.nm_creds_t));
+	memcpy(&message.nm_nlh_t, msg -> nm_nlh -> nlmsghdr, sizeof(message.nm_nlh_t));
 	
 	struct station *sender;
 	struct frame *frame;
@@ -850,19 +870,24 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			//queue_frame(ctx, sender, frame); done in global wmediumd
 			
 			//Send data to global wmediumd
-			if( send(sock_w , (char*)&message , sizeof(mystruct_tosend) , 0) < 0)
+			if(send(sock_w, (char*)&message, sizeof(mystruct_tosend), 0) < 0)
 			{
 				puts("Send failed");
 				return 1;
 			}
 
 			//Receive a reply from the server
-			if( recv(sock_w , (char*)&server_reply , sizeof(mystruct_torecv) , 0) < 0)
+			if(recv(sock_w, (char*)&server_reply, sizeof(mystruct_torecv), 0) < 0)
 			{
 				puts("recv failed");
 				return 1;
 			}
-			else{
+			else if(server_reply.cmd_frame == 1)
+			{
+				
+			}
+			else
+			{
 				frame->flags = server_reply.flags_tosend;
 				frame->cookie = server_reply.cookie_tosend;
 				signal = server_reply.signal_tosend;
