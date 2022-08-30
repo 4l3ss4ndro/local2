@@ -748,19 +748,6 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
  */
 static int process_messages_cb(struct nl_msg *msg, void *arg)
 {
-	/*typedef struct{
-		u64 cookie_tosend;
-		u32 freq_tosend;
-		int flags_tosend;
-		int tx_rates_count_tosend;
-		struct hwsim_tx_rate tx_rates_tosend[IEEE80211_TX_MAX_RATES];
-		size_t data_len_tosend;
-		u8 data_tosend[0];
-		u8 hwaddr_tosend[ETH_ALEN];
-		u8 src_tosend;
-	} mystruct_tosend;
-	mystruct_tosend message;*/
-	
 	struct wmediumd *ctx = arg;
 	struct nlattr *attrs[HWSIM_ATTR_MAX+1];
 	/* netlink header */
@@ -847,8 +834,8 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 				goto out;
 			frame = malloc(sizeof(*frame) + data_len);
 			
-			src = hdr->addr2; //here goes the sender address
-			sender = get_station_by_addr(ctx, src); //can be found in the global wmediumd
+			src = hdr->addr2; //sender address
+			sender = get_station_by_addr(ctx, src);
 			if (!sender) {
 				w_flogf(ctx, LOG_ERR, stderr, "Unable to find sender station " MAC_FMT "\n", MAC_ARGS(src));
 				goto out;
@@ -858,15 +845,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			if (!frame)
 				goto out;
 
-			/*memcpy(message.data_tosend, data, data_len);
-			message.data_len_tosend = data_len;
-			message.flags_tosend = flags;
-			message.cookie_tosend = cookie;
-			message.freq_tosend = freq;
-			message.tx_rates_count_tosend =
-				tx_rates_len / sizeof(struct hwsim_tx_rate);
-			memcpy(message.tx_rates_tosend, tx_rates,
-			       min(tx_rates_len, sizeof(message.tx_rates_tosend)));*/
 			//queue_frame(ctx, sender, frame); done in global wmediumd
 			
 			//Send data to global wmediumd
@@ -881,10 +859,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			{
 				puts("recv failed");
 				return 1;
-			}
-			else if(server_reply.cmd_frame == 1)
-			{
-				
 			}
 			else
 			{
