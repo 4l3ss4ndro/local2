@@ -804,6 +804,16 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		int signal_tosend;
 	} mystruct_torecv;
 	mystruct_torecv server_reply;
+	
+	typedef struct{
+		size_t data_len_tobroadcast;
+		u8 data_tobroadcast;
+		int rate_idx_tobroadcast;
+		int signal_tobroadcast;
+		u32 freq_tobroadcast;
+		int cmd_frame;
+	} mystruct_tobroadcast;
+	mystruct_tobroadcast broad_mex;
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
@@ -845,13 +855,19 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			if (!frame)
 				goto out;
 
-			//queue_frame(ctx, sender, frame); done in global wmediumd
+			//queue_frame(ctx, sender, frame);
 			
 			//Send data to global wmediumd
 			if(send(sock_w, (char*)&message, sizeof(mystruct_tosend), 0) < 0)
 			{
 				puts("Send failed");
 				return 1;
+			}
+    			//Receive from UDP broadcast
+    			if(recvfrom(sockfd_udp, (char*)&broad_mex, sizeof(broad_mex),  
+                		     MSG_WAITALL, ( struct sockaddr *) &cliaddr_udp, &sizeof(cliaddr_udp)))
+			{
+			//aggiustare dichiaraz var e mettere se non è dest allora andare avanti
 			}
 
 			//Receive a reply from the server
@@ -1013,7 +1029,9 @@ int main(int argc, char *argv[])
 		
 	int sock;
 	struct sockaddr_in server;
-
+	
+	int sockfd_udp; 
+	struct sockaddr_in servaddr_udp, cliaddr_udp;
 
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
@@ -1126,6 +1144,28 @@ int main(int argc, char *argv[])
 	}
 	
 	puts("Connected with global wmediumd\n");
+	
+	// Creating socket file descriptor for UDP 
+	if ( (sockfd_udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
+	perror("socket creation failed"); 
+	exit(EXIT_FAILURE); 
+	} 
+
+	memset(&servaddr_udp, 0, sizeof(servaddr_udp)); 
+	memset(&cliaddr_udp, 0, sizeof(cliaddr_udp)); 
+
+	// Filling server information 
+	servaddr_udp.sin_family    = AF_INET; // IPv4 
+	servaddr_udp.sin_addr.s_addr = INADDR_ANY; 
+	servaddr_udp.sin_port = htons(33333); 
+
+	// Bind the socket with the server address 
+	if ( bind(sockfd_udp, (const struct sockaddr *)&servaddr_udp,  
+	    sizeof(servaddr_udp)) < 0 ) 
+	{ 
+	perror("bind failed"); 
+	exit(EXIT_FAILURE); 
+	} 
 
 	/* init libevent */
 	event_init();
