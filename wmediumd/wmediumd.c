@@ -48,6 +48,11 @@
 #include <arpa/inet.h>	//inet_addr
 
 int socket_to_global = 0;
+struct wmediumd *ctx_to_pass;
+typedef struct{
+		int sockfd_udp_t; 
+		struct sockaddr_in  cliaddr_udp_t;
+	} thread_args;
 
 static inline int div_round(int a, int b)
 {
@@ -742,6 +747,32 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
 	return NL_SKIP;
 }
 
+void *rx_cmd_frame(void *t_args)
+{
+	typedef struct{
+		size_t data_len_tobroadcast;
+		u8 data_tobroadcast;
+		int rate_idx_tobroadcast;
+		int signal_tobroadcast;
+		u32 freq_tobroadcast;
+		int cmd_frame;
+		u8 hwaddr[ETH_ALEN];
+	} mystruct_tobroadcast;
+	mystruct_tobroadcast broad_mex;
+	struct thread_args *arguments = (struct thread_args *)t_args;
+	//Receive from UDP broadcast
+	if(recvfrom(arguments -> sockfd_udp_t, (char*)&(broad_mex), sizeof(broad_mex),  
+		     MSG_WAITALL, ( struct sockaddr *) &(arguments -> cliaddr_udp_t), &sizeof(arguments -> cliaddr_udp_t)) < 0)
+	{
+		puts("recv failed");
+	}
+	else
+	{
+		
+		if(broad_mex.hwaddr == 
+	}
+}
+
 /*
  * Handle events from the kernel.  Process CMD_FRAME events and queue them
  * for later delivery with the scheduler.
@@ -780,7 +811,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	} mystruct_tosend;
 	mystruct_tosend message;
 
-	
 	message.nm_protocol_t = msg -> nm_protocol;
 	message.nm_flags_t = msg -> nm_flags;
 	message.nm_size_t = msg -> nm_size;
@@ -804,16 +834,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 		int signal_tosend;
 	} mystruct_torecv;
 	mystruct_torecv server_reply;
-	
-	typedef struct{
-		size_t data_len_tobroadcast;
-		u8 data_tobroadcast;
-		int rate_idx_tobroadcast;
-		int signal_tobroadcast;
-		u32 freq_tobroadcast;
-		int cmd_frame;
-	} mystruct_tobroadcast;
-	mystruct_tobroadcast broad_mex;
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
@@ -862,12 +882,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			{
 				puts("Send failed");
 				return 1;
-			}
-    			//Receive from UDP broadcast
-    			if(recvfrom(sockfd_udp, (char*)&broad_mex, sizeof(broad_mex),  
-                		     MSG_WAITALL, ( struct sockaddr *) &cliaddr_udp, &sizeof(cliaddr_udp)))
-			{
-			//aggiustare dichiaraz var e mettere se non è dest allora andare avanti
 			}
 
 			//Receive a reply from the server
@@ -1033,6 +1047,10 @@ int main(int argc, char *argv[])
 	int sockfd_udp; 
 	struct sockaddr_in servaddr_udp, cliaddr_udp;
 
+	thread_args t_args;
+	
+	pthread_t thread_n;
+
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
 	if (argc == 1) {
@@ -1166,6 +1184,10 @@ int main(int argc, char *argv[])
 	perror("bind failed"); 
 	exit(EXIT_FAILURE); 
 	} 
+	
+	ctx_to_pass = ctx;
+	
+	pthread_create(&thread_n, NULL, &rx_cmd_frame, (void *)&t_args);
 
 	/* init libevent */
 	event_init();
@@ -1206,6 +1228,8 @@ int main(int argc, char *argv[])
 	free(ctx.per_matrix);
 	
 	close(sock);
+	close(sockfd_udp);
+	pthread_exit(NULL);
 	
 	return EXIT_SUCCESS;
 }
