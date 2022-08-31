@@ -759,7 +759,9 @@ void *rx_cmd_frame(void *t_args)
 		u8 hwaddr[ETH_ALEN];
 	} mystruct_tobroadcast;
 	mystruct_tobroadcast broad_mex;
+	struct wmediumd *ctx = ctx_to_pass;
 	struct thread_args *arguments = (struct thread_args *)t_args;
+	
 	//Receive from UDP broadcast
 	if(recvfrom(arguments -> sockfd_udp_t, (char*)&(broad_mex), sizeof(broad_mex),  
 		     MSG_WAITALL, ( struct sockaddr *) &(arguments -> cliaddr_udp_t), &sizeof(arguments -> cliaddr_udp_t)) < 0)
@@ -769,7 +771,22 @@ void *rx_cmd_frame(void *t_args)
 	else
 	{
 		
-		if(broad_mex.hwaddr == 
+		if(broad_mex.hwaddr == ctx -> station -> hwaddr)
+		{
+			if(broad_mex.cmd_frame == 1)
+				send_cloned_frame_msg(ctx, station,
+						      frame->data,
+						      frame->data_len,
+						      rate_idx, frame->signal,
+						      frame->freq);
+			else
+				send_cloned_frame_msg(ctx, station,
+						      frame->data,
+						      frame->data_len,
+						      rate_idx, signal,
+						      frame->freq);
+			free(frame);
+		}
 	}
 }
 
