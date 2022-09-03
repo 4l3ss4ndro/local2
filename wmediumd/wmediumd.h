@@ -138,6 +138,11 @@ struct wqueue {
 	int cw_max;
 };
 
+typedef struct{
+		int sockfd_udp_t; 
+		struct sockaddr_in  cliaddr_udp_t;
+	} thread_args;
+
 struct station {
 	int index;
 	u8 addr[ETH_ALEN];		/* virtual interface mac address */
