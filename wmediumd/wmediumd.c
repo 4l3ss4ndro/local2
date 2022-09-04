@@ -25,6 +25,12 @@
 #include <netlink/genl/genl.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/family.h>
+#include <netlink/list.h>
+#include <netlink/route/link.h>
+#include <netlink/route/qdisc.h>
+#include <netlink/route/rtnl.h>
+#include <netlink/route/route.h>
+#include <netlink/netfilter/nft_data.h>
 #include <stdint.h>
 #include <getopt.h>
 #include <signal.h>
@@ -758,11 +764,10 @@ void *rx_cmd_frame(void *t_args)
 	struct wmediumd *ctx = ctx_to_pass;
 	struct station *station;
 	thread_args *arguments = (thread_args *)t_args;
-	int continue_flag = 0;
 	
 	//Receive from UDP broadcast
 	if(recvfrom(arguments -> sockfd_udp_t, (char*)&(broad_mex), sizeof(broad_mex),  
-		     MSG_WAITALL, ( struct sockaddr *) &(arguments -> cliaddr_udp_t), &sizeof(arguments -> cliaddr_udp_t)) < 0)
+		     MSG_WAITALL, ( struct sockaddr *) &(arguments -> cliaddr_udp_t), sizeof(arguments -> cliaddr_udp_t)) < 0)
 	{
 		puts("recv failed");
 	}
@@ -771,22 +776,20 @@ void *rx_cmd_frame(void *t_args)
 		list_for_each_entry(station, &ctx->stations, list) 
 		{
 			if (memcmp(broad_mex.hwaddr, station->hwaddr, ETH_ALEN) == 0)
-				continue_flag = 1;
-		}
-		if(continue_flag == 1)
-		{
-			if(broad_mex.cmd_frame == 1)
-				send_cloned_frame_msg(ctx, broad_mex.hwaddr,
-						      broad_mex.data_tobroadcast,
-						      broad_mex.data_len_tobroadcast,
-						      broad_mex.rate_idx_tobroadcast, broad_mex.signal_tobroadcast,
-						      broad_mex.freq_tobroadcast);
-			else
-				send_cloned_frame_msg(ctx, broad_mex.hwaddr,
-						      broad_mex.data_tobroadcast,
-						      broad_mex.data_len_tobroadcast,
-						      broad_mex.rate_idx_tobroadcast, signal,
-						      broad_mex.freq_tobroadcast);
+			{
+				if(broad_mex.cmd_frame == 1)
+					send_cloned_frame_msg(ctx, station,
+							      broad_mex.data_tobroadcast,
+							      broad_mex.data_len_tobroadcast,
+							      broad_mex.rate_idx_tobroadcast, broad_mex.signal_tobroadcast,
+							      broad_mex.freq_tobroadcast);
+				else
+					send_cloned_frame_msg(ctx, station,
+							      broad_mex.data_tobroadcast,
+							      broad_mex.data_len_tobroadcast,
+							      broad_mex.rate_idx_tobroadcast, signal,
+							      broad_mex.freq_tobroadcast);
+			}
 		}
 	}
 }
