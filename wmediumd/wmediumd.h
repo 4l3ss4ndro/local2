@@ -162,17 +162,6 @@ typedef struct{
 		 uint32_t nlmsg_pid_tt;
 	} nlmsghdr_t;
 
-typedef struct{
-		int nm_protocol_t;
-		int nm_flags_t;
- 		struct sockaddr_nl nm_src_t;
- 		struct sockaddr_nl nm_dst_t;
- 		struct ucred nm_creds_t;
- 		struct nlmsghdr_t nm_nlh_t;
- 		size_t nm_size_t;
- 		int nm_refcnt_t;
-	} mystruct_tosend;
-
 struct station {
 	int index;
 	u8 addr[ETH_ALEN];		/* virtual interface mac address */
