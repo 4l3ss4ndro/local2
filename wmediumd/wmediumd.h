@@ -110,7 +110,10 @@ enum {
 #include <stdbool.h>
 #include <syslog.h>
 #include <stdio.h>
-#include <netlink-types.h>
+#include <netlink/netlink.h>
+#include <netlink/genl/genl.h>
+#include <netlink/genl/ctrl.h>
+#include <netlink/genl/family.h>
 
 
 
