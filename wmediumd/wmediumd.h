@@ -114,7 +114,12 @@ enum {
 #include <netlink/genl/genl.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/family.h>
-
+#include <netlink/list.h>
+#include <netlink/route/link.h>
+#include <netlink/route/qdisc.h>
+#include <netlink/route/rtnl.h>
+#include <netlink/route/route.h>
+#include <netlink/netfilter/nft_data.h>
 
 
 #include "list.h"
