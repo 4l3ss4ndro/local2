@@ -777,7 +777,7 @@ void *rx_cmd_frame(void *t_args)
 			if (memcmp(broad_mex.hwaddr, station->hwaddr, ETH_ALEN) == 0)
 				continue_flag = 1;
 		}
-		if(continue_flag = 1)
+		if(continue_flag == 1)
 		{
 			if(broad_mex.cmd_frame == 1)
 				send_cloned_frame_msg(ctx, broad_mex.hwaddr,
@@ -791,7 +791,6 @@ void *rx_cmd_frame(void *t_args)
 						      broad_mex.data_len_tobroadcast,
 						      broad_mex.rate_idx_tobroadcast, signal,
 						      broad_mex.freq_tobroadcast);
-			free(frame);
 		}
 	}
 }
@@ -1208,7 +1207,7 @@ int main(int argc, char *argv[])
 	exit(EXIT_FAILURE); 
 	} 
 	
-	ctx_to_pass = *ctx;
+	ctx_to_pass = &ctx;
 	
 	pthread_create(&thread_n, NULL, &rx_cmd_frame, (void *)&t_args);
 
