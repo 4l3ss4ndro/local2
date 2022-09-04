@@ -110,6 +110,9 @@ enum {
 #include <stdbool.h>
 #include <syslog.h>
 #include <stdio.h>
+#include <netlink-types.h>
+
+
 
 #include "list.h"
 #include "ieee80211.h"
@@ -142,6 +145,30 @@ typedef struct{
 		int sockfd_udp_t; 
 		struct sockaddr_in  cliaddr_udp_t;
 	} thread_args;
+
+typedef struct{
+		 __u32 nlmsg_len_t;
+		 __u16 nlmsg_type_t;
+		 __u16 nlmsg_flags_t;
+		 __u32 nlmsg_seq_t;
+		 __u32 nlmsg_pid_t;
+		 uint32_t nlmsg_len_tt;
+		 uint16_t nlmsg_type_tt;
+		 uint16_t nlmsg_flags_tt;
+		 uint32_t nlmsg_seq_tt;
+		 uint32_t nlmsg_pid_tt;
+	} nlmsghdr_t;
+
+typedef struct{
+		int nm_protocol_t;
+		int nm_flags_t;
+ 		struct sockaddr_nl nm_src_t;
+ 		struct sockaddr_nl nm_dst_t;
+ 		struct ucred nm_creds_t;
+ 		struct nlmsghdr_t nm_nlh_t;
+ 		size_t nm_size_t;
+ 		int nm_refcnt_t;
+	} mystruct_tosend;
 
 struct station {
 	int index;
