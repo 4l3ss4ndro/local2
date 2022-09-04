@@ -760,7 +760,9 @@ void *rx_cmd_frame(void *t_args)
 	} mystruct_tobroadcast;
 	mystruct_tobroadcast broad_mex;
 	struct wmediumd *ctx = ctx_to_pass;
+	struct station *station;
 	struct thread_args *arguments = (struct thread_args *)t_args;
+	int continue_flag = 0;
 	
 	//Receive from UDP broadcast
 	if(recvfrom(arguments -> sockfd_udp_t, (char*)&(broad_mex), sizeof(broad_mex),  
@@ -770,21 +772,25 @@ void *rx_cmd_frame(void *t_args)
 	}
 	else
 	{
-		
-		if(broad_mex.hwaddr == ctx -> station -> hwaddr)
+		list_for_each_entry(station, &ctx->stations, list) 
+		{
+			if (memcmp(broad_mex.hwaddr, station->hwaddr, ETH_ALEN) == 0)
+				continue_flag = 1;
+		}
+		if(continue_flag = 1)
 		{
 			if(broad_mex.cmd_frame == 1)
-				send_cloned_frame_msg(ctx, station,
-						      frame->data,
-						      frame->data_len,
-						      rate_idx, frame->signal,
-						      frame->freq);
+				send_cloned_frame_msg(ctx, broad_mex.hwaddr,
+						      broad_mex.data_tobroadcast,
+						      broad_mex.data_len_tobroadcast,
+						      broad_mex.rate_idx_tobroadcast, broad_mex.signal_tobroadcast,
+						      broad_mex.freq_tobroadcast);
 			else
-				send_cloned_frame_msg(ctx, station,
-						      frame->data,
-						      frame->data_len,
-						      rate_idx, signal,
-						      frame->freq);
+				send_cloned_frame_msg(ctx, broad_mex.hwaddr,
+						      broad_mex.data_tobroadcast,
+						      broad_mex.data_len_tobroadcast,
+						      broad_mex.rate_idx_tobroadcast, signal,
+						      broad_mex.freq_tobroadcast);
 			free(frame);
 		}
 	}
@@ -804,16 +810,16 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct genlmsghdr *gnlh = nlmsg_data(nlh);
 	
 	typedef struct{
-		 __u32 nlmsg_len;
-		 __u16 nlmsg_type;
-		 __u16 nlmsg_flags;
-		 __u32 nlmsg_seq;
-		 __u32 nlmsg_pid;
-		 uint32_t nlmsg_len;
-		 uint16_t nlmsg_type;
-		 uint16_t nlmsg_flags;
-		 uint32_t nlmsg_seq;
-		 uint32_t nlmsg_pid;
+		 __u32 nlmsg_len_t;
+		 __u16 nlmsg_type_t;
+		 __u16 nlmsg_flags_t;
+		 __u32 nlmsg_seq_t;
+		 __u32 nlmsg_pid_t;
+		 uint32_t nlmsg_len_tt;
+		 uint16_t nlmsg_type_tt;
+		 uint16_t nlmsg_flags_tt;
+		 uint32_t nlmsg_seq_tt;
+		 uint32_t nlmsg_pid_tt;
 	} nlmsghdr_t;
 	
 	typedef struct{
@@ -911,7 +917,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			{
 				frame->flags = server_reply.flags_tosend;
 				frame->cookie = server_reply.cookie_tosend;
-				signal = server_reply.signal_tosend;
+				frame->signal = server_reply.signal_tosend;
 				frame->tx_rates_count = server_reply.tx_rates_count_tosend;
 				memcpy(frame->tx_rates, server_reply.tx_rates_tosend, sizeof(server_reply.tx_rates_tosend));
 				
@@ -1202,7 +1208,7 @@ int main(int argc, char *argv[])
 	exit(EXIT_FAILURE); 
 	} 
 	
-	ctx_to_pass = ctx;
+	ctx_to_pass = *ctx;
 	
 	pthread_create(&thread_n, NULL, &rx_cmd_frame, (void *)&t_args);
 
