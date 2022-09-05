@@ -31,7 +31,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
- #include <linux/netlink.h>
+//#include <linux/netlink.h>
 #include "wmediumd.h"
 #include "ieee80211.h"
 #include "config.h"
@@ -813,10 +813,10 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	message.nm_flags_t = msg -> nm_flags;
 	message.nm_size_t = msg -> nm_size;
 	message.nm_refcnt_t = msg -> nm_refcnt;
-	memcpy(&message.nm_src_t, msg -> nm_src, sizeof(message.nm_src_t));
-	memcpy(&message.nm_dst_t, msg -> nm_dst, sizeof(message.nm_dst_t));
-	memcpy(&message.nm_creds_t, msg -> nm_creds, sizeof(message.nm_creds_t));
-	memcpy(&message.nm_nlh_t, msg -> nm_nlh -> nlmsghdr, sizeof(message.nm_nlh_t));
+	memcpy(message.nm_src_t, msg -> nm_src, sizeof(message.nm_src_t));
+	memcpy(message.nm_dst_t, msg -> nm_dst, sizeof(message.nm_dst_t));
+	memcpy(message.nm_creds_t, msg -> nm_creds, sizeof(message.nm_creds_t));
+	memcpy(message.nm_nlh_t, msg -> nm_nlh -> nlmsghdr, sizeof(message.nm_nlh_t));
 	
 	struct station *sender;
 	struct frame *frame;
