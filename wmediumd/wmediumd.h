@@ -110,16 +110,6 @@ enum {
 #include <stdbool.h>
 #include <syslog.h>
 #include <stdio.h>
-#include <netlink/netlink.h>
-#include <netlink/genl/genl.h>
-#include <netlink/genl/ctrl.h>
-#include <netlink/genl/family.h>
-#include <netlink/list.h>
-#include <netlink/route/link.h>
-#include <netlink/route/qdisc.h>
-#include <netlink/route/rtnl.h>
-#include <netlink/route/route.h>
-#include <netlink/netfilter/nft_data.h>
 
 
 #include "list.h"
@@ -154,13 +144,26 @@ typedef struct{
 		struct sockaddr_in  cliaddr_udp_t;
 	} thread_args;
 
-typedef struct{
+struct sockaddr_nl {
+		__kernel_sa_family_t nl_family;	/* AF_NETLINK	*/
+		unsigned short nl_pad;		/* zero		*/
+		__u32 nl_pid;		/* port ID	*/
+		__u32 nl_groups;	/* multicast groups mask */
+	};
+
+struct ucred {
+		__u32 pid;
+		__u32 uid;
+ 		__u32 gid;
+	};
+
+struct nlmsghdr_t {
 		 __u32 nlmsg_len_t;
 		 __u16 nlmsg_type_t;
 		 __u16 nlmsg_flags_t;
 		 __u32 nlmsg_seq_t;
 		 __u32 nlmsg_pid_t;
-	} nlmsghdr_t;
+	};
 
 struct station {
 	int index;
