@@ -160,11 +160,6 @@ typedef struct{
 		 __u16 nlmsg_flags_t;
 		 __u32 nlmsg_seq_t;
 		 __u32 nlmsg_pid_t;
-		 uint32_t nlmsg_len_tt;
-		 uint16_t nlmsg_type_tt;
-		 uint16_t nlmsg_flags_tt;
-		 uint32_t nlmsg_seq_tt;
-		 uint32_t nlmsg_pid_tt;
 	} nlmsghdr_t;
 
 struct station {
