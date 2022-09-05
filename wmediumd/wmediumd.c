@@ -41,6 +41,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <socket.h>
 
 #include "wmediumd.h"
 #include "ieee80211.h"
