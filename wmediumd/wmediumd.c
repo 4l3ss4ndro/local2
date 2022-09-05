@@ -21,16 +21,7 @@
  *	02110-1301, USA.
  */
 
-#include <netlink/netlink.h>
-#include <netlink/genl/genl.h>
-#include <netlink/genl/ctrl.h>
-#include <netlink/genl/family.h>
-#include <netlink/list.h>
-#include <netlink/route/link.h>
-#include <netlink/route/qdisc.h>
-#include <netlink/route/rtnl.h>
-#include <netlink/route/route.h>
-#include <netlink/netfilter/nft_data.h>
+#include <netlink.h>
 #include <stdint.h>
 #include <getopt.h>
 #include <signal.h>
@@ -814,7 +805,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
  		struct sockaddr_nl nm_src_t;
  		struct sockaddr_nl nm_dst_t;
  		struct ucred nm_creds_t;
- 		nlmsghdr_t nm_nlh_t;
+ 		struct nlmsghdr_t nm_nlh_t;
  		size_t nm_size_t;
  		int nm_refcnt_t;
 	} mystruct_tosend;
