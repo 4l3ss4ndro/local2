@@ -113,12 +113,19 @@ enum {
 #include <stdbool.h>
 #include <syslog.h>
 #include <stdio.h>
-#include <linux/netlink.h>
+//#include <linux/netlink.h>
+#include <netlink/netlink.h>
+#include <netlink/genl/genl.h>
+#include <netlink/genl/family.h>
+#include <netlink/genl/ctrl.h>
+
+#include <linux/socket.h>
 
 #include "list.h"
 #include "ieee80211.h"
 
 typedef uint8_t u8;
+typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
@@ -148,13 +155,6 @@ typedef struct{
 	} thread_args;
 
 typedef unsigned short __kernel_sa_family_t;
-
-struct sockaddr_nl {
-		__kernel_sa_family_t nl_family;	/* AF_NETLINK	*/
-		unsigned short nl_pad;		/* zero		*/
-		u32 nl_pid;		/* port ID	*/
-		u32 nl_groups;	/* multicast groups mask */
-	};
 
 struct ucred {
 		u32 pid;
