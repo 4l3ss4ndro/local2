@@ -21,7 +21,6 @@
  *	02110-1301, USA.
  */
 
-#include <netlink.h>
 #include <stdint.h>
 #include <getopt.h>
 #include <signal.h>
