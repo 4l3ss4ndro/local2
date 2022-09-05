@@ -144,25 +144,27 @@ typedef struct{
 		struct sockaddr_in  cliaddr_udp_t;
 	} thread_args;
 
+typedef unsigned short __kernel_sa_family_t;
+
 struct sockaddr_nl {
 		__kernel_sa_family_t nl_family;	/* AF_NETLINK	*/
 		unsigned short nl_pad;		/* zero		*/
-		__u32 nl_pid;		/* port ID	*/
-		__u32 nl_groups;	/* multicast groups mask */
+		u32 nl_pid;		/* port ID	*/
+		u32 nl_groups;	/* multicast groups mask */
 	};
 
 struct ucred {
-		__u32 pid;
-		__u32 uid;
- 		__u32 gid;
+		u32 pid;
+		u32 uid;
+ 		u32 gid;
 	};
 
 struct nlmsghdr_t {
-		 __u32 nlmsg_len_t;
-		 __u16 nlmsg_type_t;
-		 __u16 nlmsg_flags_t;
-		 __u32 nlmsg_seq_t;
-		 __u32 nlmsg_pid_t;
+		 u32 nlmsg_len_t;
+		 u16 nlmsg_type_t;
+		 u16 nlmsg_flags_t;
+		 u32 nlmsg_seq_t;
+		 u32 nlmsg_pid_t;
 	};
 
 struct station {
