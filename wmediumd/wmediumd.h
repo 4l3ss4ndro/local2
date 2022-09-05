@@ -32,6 +32,9 @@
 #define HWSIM_CMD_FRAME 2
 #define HWSIM_CMD_TX_INFO_FRAME 3
 
+//#define NL_AUTO_SEQ 0
+//#define NL_AUTO_PID 0
+
 /**
  * enum hwsim_attrs - hwsim netlink attributes
  *
@@ -110,7 +113,7 @@ enum {
 #include <stdbool.h>
 #include <syslog.h>
 #include <stdio.h>
-
+#include <linux/netlink.h>
 
 #include "list.h"
 #include "ieee80211.h"
