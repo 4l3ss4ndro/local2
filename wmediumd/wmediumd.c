@@ -31,7 +31,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
-
+ #include <linux/netlink.h>
 #include "wmediumd.h"
 #include "ieee80211.h"
 #include "config.h"
