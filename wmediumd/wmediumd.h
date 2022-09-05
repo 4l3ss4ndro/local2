@@ -152,7 +152,7 @@ struct wqueue {
 typedef struct{
 		int sockfd_udp_t; 
 		struct sockaddr_in  cliaddr_udp_t;
-	} thread_args;
+} thread_args;
 
 typedef unsigned short __kernel_sa_family_t;
 
@@ -160,7 +160,7 @@ struct ucred {
 		u32 pid;
 		u32 uid;
  		u32 gid;
-	};
+};
 
 struct nlmsghdr_t {
 		 u32 nlmsg_len_t;
@@ -168,7 +168,18 @@ struct nlmsghdr_t {
 		 u16 nlmsg_flags_t;
 		 u32 nlmsg_seq_t;
 		 u32 nlmsg_pid_t;
-	};
+};
+
+struct nl_msg {
+		int nm_protocol;
+		int nm_flags;
+		struct sockaddr_nl nm_src;
+		struct sockaddr_nl nm_dst;
+		struct ucred nm_creds;
+		struct nlmsghdr * nm_nlh;
+		size_t nm_size;
+		int nm_refcnt;
+};
 
 struct station {
 	int index;
