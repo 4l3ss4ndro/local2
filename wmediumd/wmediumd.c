@@ -1136,7 +1136,40 @@ int main(int argc, char *argv[])
 	INIT_LIST_HEAD(&ctx.stations);
 	if (load_config(&ctx, config_file, per_file, full_dynamic))
 		return EXIT_FAILURE;
-	
+
+	/* init libevent */
+	event_init();
+
+	/* init netlink */
+	if (init_netlink(&ctx) < 0)
+		return EXIT_FAILURE;
+
+	event_set(&ev_cmd, nl_socket_get_fd(ctx.sock), EV_READ | EV_PERSIST,
+		  sock_event_cb, &ctx);
+	event_add(&ev_cmd, NULL);
+
+	/* setup timers */
+	ctx.timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
+	clock_gettime(CLOCK_MONOTONIC, &ctx.intf_updated);
+	clock_gettime(CLOCK_MONOTONIC, &ctx.next_move);
+	ctx.next_move.tv_sec += MOVE_INTERVAL;
+	event_set(&ev_timer, ctx.timerfd, EV_READ | EV_PERSIST, timer_cb, &ctx);
+	event_add(&ev_timer, NULL);
+
+	/* register for new frames */
+	if (send_register_msg(&ctx) == 0) {
+		w_logf(&ctx, LOG_NOTICE, "REGISTER SENT!\n");
+	}
+
+	if (start_server == true)
+		start_wserver(&ctx);
+
+	/* enter libevent main loop */
+	event_dispatch();
+
+	if (start_server == true)
+		stop_wserver();
+
 	/*Socket client opens*/
 	
 	//Create socket
@@ -1187,40 +1220,7 @@ int main(int argc, char *argv[])
 	ctx_to_pass = &ctx;
 	
 	pthread_create(&thread_n, NULL, &rx_cmd_frame, (void *)&t_args);
-
-	/* init libevent */
-	event_init();
-
-	/* init netlink */
-	if (init_netlink(&ctx) < 0)
-		return EXIT_FAILURE;
-
-	event_set(&ev_cmd, nl_socket_get_fd(ctx.sock), EV_READ | EV_PERSIST,
-		  sock_event_cb, &ctx);
-	event_add(&ev_cmd, NULL);
-
-	/* setup timers */
-	ctx.timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
-	clock_gettime(CLOCK_MONOTONIC, &ctx.intf_updated);
-	clock_gettime(CLOCK_MONOTONIC, &ctx.next_move);
-	ctx.next_move.tv_sec += MOVE_INTERVAL;
-	event_set(&ev_timer, ctx.timerfd, EV_READ | EV_PERSIST, timer_cb, &ctx);
-	event_add(&ev_timer, NULL);
-
-	/* register for new frames */
-	if (send_register_msg(&ctx) == 0) {
-		w_logf(&ctx, LOG_NOTICE, "REGISTER SENT!\n");
-	}
-
-	if (start_server == true)
-		start_wserver(&ctx);
-
-	/* enter libevent main loop */
-	event_dispatch();
-
-	if (start_server == true)
-		stop_wserver();
-
+	
 	free(ctx.sock);
 	free(ctx.cb);
 	free(ctx.intf);
