@@ -154,20 +154,12 @@ typedef struct{
 		struct sockaddr_in  cliaddr_udp_t;
 } thread_args;
 
-typedef unsigned short __kernel_sa_family_t;
+typedef unsigned short __kernel_sa_family;
 
 struct ucred {
 		u32 pid;
 		u32 uid;
  		u32 gid;
-};
-
-struct nlmsghdr_t {
-		 u32 nlmsg_len_t;
-		 u16 nlmsg_type_t;
-		 u16 nlmsg_flags_t;
-		 u32 nlmsg_seq_t;
-		 u32 nlmsg_pid_t;
 };
 
 struct nl_msg {
