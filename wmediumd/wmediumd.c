@@ -741,15 +741,6 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
 
 void *rx_cmd_frame(void *t_args)
 {
-	typedef struct{
-		size_t data_len_tobroadcast;
-		u8 data_tobroadcast;
-		int rate_idx_tobroadcast;
-		int signal_tobroadcast;
-		u32 freq_tobroadcast;
-		int cmd_frame;
-		u8 hwaddr[ETH_ALEN];
-	} mystruct_tobroadcast;
 	mystruct_tobroadcast broad_mex;
 	struct wmediumd *ctx = ctx_to_pass;
 	struct station *station;
@@ -797,16 +788,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	/* generic netlink header*/
 	struct genlmsghdr *gnlh = nlmsg_data(nlh);
 	
-	typedef struct{
-		int nm_protocol_t;
-		int nm_flags_t;
- 		struct sockaddr_nl nm_src_t;
- 		struct sockaddr_nl nm_dst_t;
- 		struct ucred nm_creds_t;
- 		struct nlmsghdr nm_nlh_t;
- 		size_t nm_size_t;
- 		int nm_refcnt_t;
-	} mystruct_tosend;
 	mystruct_tosend message;
 
 	message.nm_protocol_t = msg -> nm_protocol;
@@ -825,13 +806,6 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	u8 *src;
 	int sock_w = socket_to_global;
 	
-	typedef struct{
-		u64 cookie_tosend;
-		int flags_tosend;
-		int tx_rates_count_tosend;
-		struct hwsim_tx_rate tx_rates_tosend[IEEE80211_TX_MAX_RATES];
-		int signal_tosend;
-	} mystruct_torecv;
 	mystruct_torecv server_reply;
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
