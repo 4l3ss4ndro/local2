@@ -806,7 +806,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	u8 *src;
 	int sock_w = socket_to_global;
 	
-	mystruct_torecv server_reply;
+	mystruct_frame server_reply;
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
