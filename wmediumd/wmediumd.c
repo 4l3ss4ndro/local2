@@ -788,7 +788,7 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	/* generic netlink header*/
 	struct genlmsghdr *gnlh = nlmsg_data(nlh);
 	
-	mystruct_tosend message;
+	mystruct_nlmsg message;
 
 	message.nm_protocol_t = msg -> nm_protocol;
 	message.nm_flags_t = msg -> nm_flags;
@@ -851,14 +851,14 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			//queue_frame(ctx, sender, frame);
 			
 			//Send data to global wmediumd
-			if(send(sock_w, (char*)&message, sizeof(mystruct_tosend), 0) < 0)
+			if(send(sock_w, (char*)&message, sizeof(mystruct_nlmsg), 0) < 0)
 			{
 				puts("Send failed");
 				return 1;
 			}
 
 			//Receive a reply from the server
-			if(recv(sock_w, (char*)&server_reply, sizeof(mystruct_torecv), 0) < 0)
+			if(recv(sock_w, (char*)&server_reply, sizeof(mystruct_frame), 0) < 0)
 			{
 				puts("recv failed");
 				return 1;
