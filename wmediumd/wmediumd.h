@@ -173,6 +173,35 @@ struct nl_msg {
 		int nm_refcnt;
 };
 
+typedef struct{
+		size_t data_len_tobroadcast;
+		u8 data_tobroadcast;
+		int rate_idx_tobroadcast;
+		int signal_tobroadcast;
+		u32 freq_tobroadcast;
+		int cmd_frame;
+		u8 hwaddr[ETH_ALEN];
+	} mystruct_tobroadcast;
+
+typedef struct{
+		u64 cookie_tosend;
+		int flags_tosend;
+		int tx_rates_count_tosend;
+		struct hwsim_tx_rate tx_rates_tosend[IEEE80211_TX_MAX_RATES];
+		int signal_tosend;
+	} mystruct_frame;
+
+typedef struct{
+		int nm_protocol_t;
+		int nm_flags_t;
+ 		struct sockaddr_nl nm_src_t;
+ 		struct sockaddr_nl nm_dst_t;
+ 		struct ucred nm_creds_t;
+ 		struct nlmsghdr nm_nlh_t;
+ 		size_t nm_size_t;
+ 		int nm_refcnt_t;
+	} mystruct_nlmsg;
+
 struct station {
 	int index;
 	u8 addr[ETH_ALEN];		/* virtual interface mac address */
