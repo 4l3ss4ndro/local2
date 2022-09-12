@@ -1207,7 +1207,7 @@ int main(int argc, char *argv[])
 	free(ctx.intf);
 	free(ctx.per_matrix);
 	
-	close(sock);
+	close(client_fd);
 	close(sockfd_udp);
 	pthread_exit(NULL);
 	
