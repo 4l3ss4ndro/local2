@@ -739,33 +739,56 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
 	return NL_SKIP;
 }
 
-void *rx_cmd_frame(void *t_args)
+void *rx_cmd_frame(void *)
 {
 	mystruct_tobroadcast broad_mex;
 	struct wmediumd *ctx = ctx_to_pass;
-	struct station *station;
-	thread_args *arguments = (thread_args *)t_args;
+	struct station *station_udp;
+	
+	int port = 8080;
+
+	int sockfd_udp;
+	struct sockaddr_in server_addr_udp, client_addr_udp;
+	socklen_t addr_size_udp;
+	int n_udp;
+
+	sockfd_udp = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sockfd_udp < 0){
+	perror("UDP socket error");
+	exit(1);
+	}
+
+	memset(&server_addr_udp, '\0', sizeof(server_addr_udp));
+	server_addr_udp.sin_family = AF_INET;
+	server_addr_udp.sin_port = htons(port);
+	server_addr_udp.sin_addr.s_addr = INADDR_ANY;
+
+	n_udp = bind(sockfd_udp, (struct sockaddr*)&server_addr_udp, sizeof(server_addr_udp));
+	if (n_udp < 0) {
+	perror("UDP bind error");
+	exit(1);
+	}
 	
 	//Receive from UDP broadcast
-	if(recvfrom(arguments -> sockfd_udp_t, (char*)&(broad_mex), sizeof(broad_mex),  
-		     MSG_WAITALL, ( struct sockaddr *) &(arguments -> cliaddr_udp_t), sizeof(arguments -> cliaddr_udp_t)) < 0)
+	addr_size_udp = sizeof(client_addr_udp);
+	recvfrom(sockfd_udp, (mystruct *)&broad_mex, sizeof(broad_mex), 0, (struct sockaddr*)&client_addr_udp, &addr_size_udp);
 	{
 		puts("recv failed");
 	}
 	else
 	{
-		list_for_each_entry(station, &ctx->stations, list) 
+		list_for_each_entry(station_udp, &ctx->stations, list) 
 		{
-			if (memcmp(broad_mex.hwaddr, station->hwaddr, ETH_ALEN) == 0)
+			if (memcmp(broad_mex.hwaddr, station_udp->hwaddr, ETH_ALEN) == 0)
 			{
 				if(broad_mex.cmd_frame == 1)
-					send_cloned_frame_msg(ctx, station,
+					send_cloned_frame_msg(ctx, station_udp,
 							      broad_mex.data_tobroadcast,
 							      broad_mex.data_len_tobroadcast,
 							      broad_mex.rate_idx_tobroadcast, broad_mex.signal_tobroadcast,
 							      broad_mex.freq_tobroadcast);
 				else
-					send_cloned_frame_msg(ctx, station,
+					send_cloned_frame_msg(ctx, station_udp,
 							      broad_mex.data_tobroadcast,
 							      broad_mex.data_len_tobroadcast,
 							      broad_mex.rate_idx_tobroadcast, signal,
@@ -789,6 +812,8 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	struct genlmsghdr *gnlh = nlmsg_data(nlh);
 	
 	mystruct_nlmsg message;
+	mystruct_nlmsg* tosend;
+    	tosend = &message;
 
 	message.nm_protocol_t = msg -> nm_protocol;
 	message.nm_flags_t = msg -> nm_flags;
@@ -807,6 +832,8 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	int sock_w = socket_to_global;
 	
 	mystruct_frame server_reply;
+	mystruct_frame *torecv;
+	torecv = &server_reply;
 
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
@@ -851,16 +878,17 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			//queue_frame(ctx, sender, frame);
 			
 			//Send data to global wmediumd
-			if(send(sock_w, (char*)&message, sizeof(mystruct_nlmsg), 0) < 0)
-			{
-				puts("Send failed");
+			if(send(sock_w, tosend, sizeof(tosend), 0)< 0)
+				{
+				puts("TCP send failed");
 				return 1;
 			}
-
+			printf("TCP message sent to global wmediumd.\n");
+			
 			//Receive a reply from the server
-			if(recv(sock_w, (char*)&server_reply, sizeof(mystruct_frame), 0) < 0)
+			if(read(sock_w, torecv, sizeof(torecv))< 0)
 			{
-				puts("recv failed");
+				puts("TCP recv failed");
 				return 1;
 			}
 			else
@@ -1013,16 +1041,46 @@ int main(int argc, char *argv[])
 	struct wmediumd ctx;
 	char *config_file = NULL;
 	char *per_file = NULL;
-		
-	int sock;
-	struct sockaddr_in server;
 	
-	int sockfd_udp; 
-	struct sockaddr_in servaddr_udp, cliaddr_udp;
-
-	thread_args t_args;
-	
+	thread_args t_args;	
 	pthread_t thread_n;
+	ctx_to_pass = &ctx;
+	
+	pthread_create(&thread_n, NULL, &rx_cmd_frame, NULL);
+	
+	/*Socket client opens*/
+	
+	int sock = 0, valread, client_fd;
+	struct sockaddr_in serv_addr;
+
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		printf("\n Socket TCP creation error \n");
+		return -1;
+	}
+	
+	socket_to_global = sock;
+
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(8090);
+
+	// Convert IPv4 and IPv6 addresses from text to binary
+	// form
+	if (inet_pton(AF_INET, "10.0.0.2", &serv_addr.sin_addr)
+		<= 0) {
+		printf(
+			"\nInvalid address/ Address not supported \n");
+		return -1;
+	}
+
+	if ((client_fd
+		= connect(sock, (struct sockaddr*)&serv_addr,
+				sizeof(serv_addr)))
+		< 0) {
+		printf("\nConnection Failed \n");
+		return -1;
+	}
+
+	puts("Connected with global wmediumd\n");
 
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
@@ -1144,57 +1202,6 @@ int main(int argc, char *argv[])
 	if (start_server == true)
 		stop_wserver();
 
-	/*Socket client opens*/
-	
-	//Create socket
-	sock = socket(AF_INET , SOCK_STREAM , 0);
-	if (sock == -1)
-	{
-		printf("Could not create socket");
-	}
-	else
-		socket_to_global = sock;
-	puts("Socket created");
-	
-	server.sin_addr.s_addr = inet_addr("10.0.0.2"); //set global wmediumd machine address
-	server.sin_family = AF_INET;
-	server.sin_port = htons( 8888 );
-
-	//Connect to remote server
-	if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)
-	{
-		perror("connect failed. Error");
-		return 1;
-	}
-	
-	puts("Connected with global wmediumd\n");
-	
-	// Creating socket file descriptor for UDP 
-	if ( (sockfd_udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
-	perror("socket creation failed"); 
-	exit(EXIT_FAILURE); 
-	} 
-
-	memset(&servaddr_udp, 0, sizeof(servaddr_udp)); 
-	memset(&cliaddr_udp, 0, sizeof(cliaddr_udp)); 
-
-	// Filling server information 
-	servaddr_udp.sin_family    = AF_INET; // IPv4 
-	servaddr_udp.sin_addr.s_addr = INADDR_ANY; 
-	servaddr_udp.sin_port = htons(33333); 
-
-	// Bind the socket with the server address 
-	if ( bind(sockfd_udp, (const struct sockaddr *)&servaddr_udp,  
-	    sizeof(servaddr_udp)) < 0 ) 
-	{ 
-	perror("bind failed"); 
-	exit(EXIT_FAILURE); 
-	} 
-	
-	ctx_to_pass = &ctx;
-	
-	pthread_create(&thread_n, NULL, &rx_cmd_frame, (void *)&t_args);
-	
 	free(ctx.sock);
 	free(ctx.cb);
 	free(ctx.intf);
