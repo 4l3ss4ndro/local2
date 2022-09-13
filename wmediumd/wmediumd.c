@@ -1049,15 +1049,15 @@ int main(int argc, char *argv[])
 	
 	/*Socket client opens*/
 	
-	int sock = 0, valread, client_fd;
+	int sock_tcp = 0, valread, client_fd;
 	struct sockaddr_in serv_addr;
 
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((sock_tcp = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		printf("\n Socket TCP creation error \n");
 		return -1;
 	}
 	
-	socket_to_global = sock;
+	socket_to_global = sock_tcp;
 
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(8090);
@@ -1072,7 +1072,7 @@ int main(int argc, char *argv[])
 	}
 
 	if ((client_fd
-		= connect(sock, (struct sockaddr*)&serv_addr,
+		= connect(sock_tcp, (struct sockaddr*)&serv_addr,
 				sizeof(serv_addr)))
 		< 0) {
 		printf("\nConnection Failed \n");
