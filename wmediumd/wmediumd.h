@@ -149,6 +149,11 @@ struct wqueue {
 	int cw_max;
 };
 
+struct hwsim_tx_rate {
+	signed char idx;
+	unsigned char count;
+};
+
 typedef unsigned short __kernel_sa_family;
 
 struct ucred {
@@ -249,11 +254,6 @@ struct wmediumd {
 	int (*get_fading_signal)(struct wmediumd *);
 
 	u8 log_lvl;
-};
-
-struct hwsim_tx_rate {
-	signed char idx;
-	unsigned char count;
 };
 
 struct frame {
