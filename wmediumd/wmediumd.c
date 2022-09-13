@@ -42,6 +42,9 @@
 #include <string.h>	//strlen
 #include <sys/socket.h>	//socket
 #include <arpa/inet.h>	//inet_addr
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <stdio.h>
 
 int socket_to_global = 0;
 struct wmediumd *ctx_to_pass;
@@ -739,7 +742,12 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
 	return NL_SKIP;
 }
 
-void *rx_cmd_frame(void)
+/*
+ * Handle events from the kernel.  Process CMD_FRAME events and queue them
+ * for later delivery with the scheduler.
+ */
+
+void *rx_cmd_frame(void *unused)
 {
 	mystruct_tobroadcast broad_mex;
 	struct wmediumd *ctx = ctx_to_pass;
@@ -768,7 +776,7 @@ void *rx_cmd_frame(void)
 	perror("UDP bind error");
 	exit(1);
 	}
-	
+	printf("Waiting for UDP message...");
 	//Receive from UDP broadcast
 	addr_size_udp = sizeof(client_addr_udp);
 	if(recvfrom(sockfd_udp, (mystruct_tobroadcast *)&broad_mex, sizeof(broad_mex), 0, (struct sockaddr*)&client_addr_udp, &addr_size_udp) < 0)
@@ -796,6 +804,7 @@ void *rx_cmd_frame(void)
 			}
 		}
 	}
+	return NULL;
 }
 
 /*
@@ -1164,8 +1173,8 @@ int main(int argc, char *argv[])
 		
 	ctx_to_pass = &ctx;
 	
-	pthread_create(&thread_n, NULL, &rx_cmd_frame, NULL);
-	
+	pthread_create(&thread_n, NULL, rx_cmd_frame, NULL);
+	pthread_join(thread_n, NULL);
 	/*Socket client opens*/
 	if ((sock_tcp = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		printf("\n Socket TCP creation error \n");
