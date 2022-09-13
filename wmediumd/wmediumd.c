@@ -739,7 +739,7 @@ int nl_err_cb(struct sockaddr_nl *nla, struct nlmsgerr *nlerr, void *arg)
 	return NL_SKIP;
 }
 
-void *rx_cmd_frame(void *)
+void *rx_cmd_frame(void)
 {
 	mystruct_tobroadcast broad_mex;
 	struct wmediumd *ctx = ctx_to_pass;
@@ -771,7 +771,7 @@ void *rx_cmd_frame(void *)
 	
 	//Receive from UDP broadcast
 	addr_size_udp = sizeof(client_addr_udp);
-	recvfrom(sockfd_udp, (mystruct *)&broad_mex, sizeof(broad_mex), 0, (struct sockaddr*)&client_addr_udp, &addr_size_udp);
+	if(recvfrom(sockfd_udp, (mystruct_tobroadcast *)&broad_mex, sizeof(broad_mex), 0, (struct sockaddr*)&client_addr_udp, &addr_size_udp) < 0)
 	{
 		puts("recv failed");
 	}
@@ -1041,8 +1041,7 @@ int main(int argc, char *argv[])
 	struct wmediumd ctx;
 	char *config_file = NULL;
 	char *per_file = NULL;
-	
-	thread_args t_args;	
+		
 	pthread_t thread_n;
 	ctx_to_pass = &ctx;
 	
@@ -1208,7 +1207,6 @@ int main(int argc, char *argv[])
 	free(ctx.per_matrix);
 	
 	close(client_fd);
-	close(sockfd_udp);
 	pthread_exit(NULL);
 	
 	return EXIT_SUCCESS;
