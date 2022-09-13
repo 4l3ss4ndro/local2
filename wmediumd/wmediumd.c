@@ -1035,51 +1035,18 @@ static void timer_cb(int fd, short what, void *data)
 
 int main(int argc, char *argv[])
 {
-	int opt;
+	
 	struct event ev_cmd;
 	struct event ev_timer;
 	struct wmediumd ctx;
 	char *config_file = NULL;
 	char *per_file = NULL;
-		
+	int opt;	
 	pthread_t thread_n;
-	ctx_to_pass = &ctx;
-	
-	pthread_create(&thread_n, NULL, &rx_cmd_frame, NULL);
-	
-	/*Socket client opens*/
-	
 	int sock_tcp = 0, valread, client_fd;
 	struct sockaddr_in serv_addr;
-
-	if ((sock_tcp = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		printf("\n Socket TCP creation error \n");
-		return -1;
-	}
 	
-	socket_to_global = sock_tcp;
-
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(8090);
-
-	// Convert IPv4 and IPv6 addresses from text to binary
-	// form
-	if (inet_pton(AF_INET, "10.0.0.2", &serv_addr.sin_addr)
-		<= 0) {
-		printf(
-			"\nInvalid address/ Address not supported \n");
-		return -1;
-	}
-
-	if ((client_fd
-		= connect(sock_tcp, (struct sockaddr*)&serv_addr,
-				sizeof(serv_addr)))
-		< 0) {
-		printf("\nConnection Failed \n");
-		return -1;
-	}
-
-	puts("Connected with global wmediumd\n");
+	
 
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
@@ -1194,6 +1161,40 @@ int main(int argc, char *argv[])
 
 	if (start_server == true)
 		start_wserver(&ctx);
+		
+	ctx_to_pass = &ctx;
+	
+	pthread_create(&thread_n, NULL, &rx_cmd_frame, NULL);
+	
+	/*Socket client opens*/
+	if ((sock_tcp = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		printf("\n Socket TCP creation error \n");
+		return -1;
+	}
+	
+	socket_to_global = sock_tcp;
+
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(8090);
+
+	// Convert IPv4 and IPv6 addresses from text to binary
+	// form
+	if (inet_pton(AF_INET, "10.0.0.2", &serv_addr.sin_addr)
+		<= 0) {
+		printf(
+			"\nInvalid address/ Address not supported \n");
+		return -1;
+	}
+
+	if ((client_fd
+		= connect(sock_tcp, (struct sockaddr*)&serv_addr,
+				sizeof(serv_addr)))
+		< 0) {
+		printf("\nConnection Failed \n");
+		return -1;
+	}
+
+	puts("Connected with global wmediumd\n");
 
 	/* enter libevent main loop */
 	event_dispatch();
