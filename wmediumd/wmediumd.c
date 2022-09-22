@@ -31,7 +31,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <pthread.h>
- #include <linux/netlink.h>
+ //#include <linux/netlink.h>
 #include "wmediumd.h"
 #include "ieee80211.h"
 #include "config.h"
@@ -45,6 +45,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int socket_to_global = 0;
 struct wmediumd *ctx_to_pass;
@@ -242,7 +243,7 @@ static int set_interference_duration(struct wmediumd *ctx, int src_idx,
 				     int duration, int signal)
 {
 	int i, medium_id;
-
+	fprintf(stdout, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaa\n");
 	if (!ctx->intf)
 		return 0;
 
@@ -266,7 +267,7 @@ static int get_signal_offset_by_interference(struct wmediumd *ctx, int src_idx,
 {
     int i, medium_id;
 	double intf_power;
-
+	fprintf(stdout, "BBBBBBBBBBBBBBBBBBBBB\n");
 	if (!ctx->intf)
 		return 0;
 
@@ -306,6 +307,7 @@ static struct station *get_station_by_addr(struct wmediumd *ctx, u8 *addr)
 
 void detect_mediums(struct wmediumd *ctx, struct station *src, struct station *dest) {
     int medium_id;
+    fprintf(stdout, "CCCCCCCCCCCCCCCCCCCCCCCCCC\n");
     if (!ctx->enable_medium_detection){
         return;
     }
@@ -351,7 +353,7 @@ void queue_frame(struct wmediumd *ctx, struct station *station,
 	int i, j;
 	int rate_idx;
 	int ac;
-
+	fprintf(stdout, fprintf(stdout, "In deliver_frame function\n"));
 	/* TODO configure phy parameters */
 	int slot_time = 9;
 	int sifs = 16;
@@ -752,7 +754,7 @@ void *rx_cmd_frame(void *unused)
 	mystruct_tobroadcast broad_mex;
 	struct wmediumd *ctx = ctx_to_pass;
 	struct station *station_udp;
-	
+	fprintf(stdout, "Creating UDP socket...\n");
 	int port = 8080;
 
 	int sockfd_udp;
@@ -770,21 +772,25 @@ void *rx_cmd_frame(void *unused)
 	server_addr_udp.sin_family = AF_INET;
 	server_addr_udp.sin_port = htons(port);
 	server_addr_udp.sin_addr.s_addr = INADDR_ANY;
-
+	
+	int opt_reuse = 1;
+  	setsockopt(sockfd_udp, SOL_SOCKET, SO_REUSEPORT, &opt_reuse, sizeof(opt_reuse));
+  
 	n_udp = bind(sockfd_udp, (struct sockaddr*)&server_addr_udp, sizeof(server_addr_udp));
 	if (n_udp < 0) {
 	perror("UDP bind error");
 	exit(1);
 	}
-	printf("Waiting for UDP message...");
+	
+	fprintf(stdout, "Waiting for UDP message...\n");
 	//Receive from UDP broadcast
 	addr_size_udp = sizeof(client_addr_udp);
-	if(recvfrom(sockfd_udp, (mystruct_tobroadcast *)&broad_mex, sizeof(broad_mex), 0, (struct sockaddr*)&client_addr_udp, &addr_size_udp) < 0)
+	if(recvfrom(sockfd_udp, (mystruct_tobroadcast *)&broad_mex, sizeof(mystruct_tobroadcast), 0, (struct sockaddr*)&client_addr_udp, &addr_size_udp) < 0)
 	{
 		puts("recv failed");
 	}
 	else
-	{
+	{	printf("UDP message received\n");
 		list_for_each_entry(station_udp, &ctx->stations, list) 
 		{
 			if (memcmp(broad_mex.hwaddr, station_udp->hwaddr, ETH_ALEN) == 0)
@@ -823,22 +829,48 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	mystruct_nlmsg message;
 	mystruct_nlmsg* tosend;
     	tosend = &message;
-
+	
+	/*fprintf(stdout, "Message:\n");
+	printf("%d\n", msg->nm_protocol);
+	printf("%d\n", msg->nm_flags);
+	printf("%zu\n", msg->nm_size);
+	printf("%d\n", msg->nm_refcnt);
+	printf("%u\n", msg->nm_src.nl_family);
+	printf("%u\n", msg->nm_src.nl_pad);
+	printf("%u\n", msg->nm_src.nl_pid);
+	printf("%u\n", msg->nm_src.nl_groups);
+	printf("%u\n", msg->nm_dst.nl_family);
+	printf("%u\n", msg->nm_dst.nl_pad);
+	printf("%u\n", msg->nm_dst.nl_pid);
+	printf("%u\n", msg->nm_dst.nl_groups);
+	printf("%ld\n", (long) msg->nm_creds.pid);
+	printf("%ld\n", (long) msg->nm_creds.uid);
+	printf("%ld\n", (long) msg->nm_creds.gid);
+	printf("%u\n", msg->nm_nlh->nlmsg_len);
+	printf("%u\n", msg->nm_nlh->nlmsg_type);
+	printf("%u\n", msg->nm_nlh->nlmsg_flags);
+	printf("%u\n", msg->nm_nlh->nlmsg_seq);
+	printf("%u\n", msg->nm_nlh->nlmsg_pid);
+	printf("%p %p %p\n", &(msg -> nm_creds), &(msg->nm_nlh), msg->nm_nlh);
+	printf("%p %p\n", nlh, gnlh);
+	
 	message.nm_protocol_t = msg -> nm_protocol;
 	message.nm_flags_t = msg -> nm_flags;
-	message.nm_size_t = msg -> nm_size;
-	message.nm_refcnt_t = msg -> nm_refcnt;
 	message.nm_src_t = msg -> nm_src;
 	message.nm_dst_t = msg -> nm_dst;
 	message.nm_creds_t = msg -> nm_creds;
 	message.nm_nlh_t = *(msg -> nm_nlh);
-	
+	message.nm_size_t = msg -> nm_size;
+	message.nm_refcnt_t = msg -> nm_refcnt;
+	message.nlh_t = *(nlh);
+	message.gnlh_t = *(gnlh);*/
 	
 	struct station *sender;
 	struct frame *frame;
 	struct ieee80211_hdr *hdr;
 	u8 *src;
 	int sock_w = socket_to_global;
+	struct station *stationid;
 	
 	mystruct_frame server_reply;
 	mystruct_frame *torecv;
@@ -847,8 +879,14 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 	if (gnlh->cmd == HWSIM_CMD_FRAME) {
 		
 		pthread_rwlock_rdlock(&snr_lock);
+		/*for(int j=0; j<HWSIM_ATTR_MAX; j++)
+			printf("%p ", attrs[j]);
+		printf("\n");*/
 		/* we get the attributes*/
 		genlmsg_parse(nlh, 0, attrs, HWSIM_ATTR_MAX, NULL);
+		/*for(int j=0; j<HWSIM_ATTR_MAX; j++)
+			printf("%p ", attrs[j]);
+		printf("\n");*/
 		if (attrs[HWSIM_ATTR_ADDR_TRANSMITTER]) {
 			u8 *hwaddr = (u8 *)nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]); //mac address of tx sta
 
@@ -883,25 +921,40 @@ static int process_messages_cb(struct nl_msg *msg, void *arg)
 			
 			if (!frame)
 				goto out;
+				
+			message.hwaddr_t = *hwaddr;
+			message.data_len_t = data_len;
+			message.flags_t = flags;
+			message.tx_rates_len_t = tx_rates_len;
+			message.tx_rates_t = *tx_rates;
+			message.cookie_t = cookie;
+			message.freq_t = freq;
+			message.src_t = *src;
+			memcpy(&message.data_t, data, sizeof(data));
 
 			//queue_frame(ctx, sender, frame);
 			
+			//list_for_each_entry(stationid, &ctx->stations, list) 
+				//printf("Medium ID: %d\n", stationid -> medium_id);
+			
 			//Send data to global wmediumd
-			if(send(sock_w, tosend, sizeof(tosend), 0)< 0)
+			if(send(sock_w, tosend, sizeof(mystruct_nlmsg), 0)< 0)
 				{
 				puts("TCP send failed");
 				return 1;
 			}
-			printf("TCP message sent to global wmediumd.\n");
+			else
+				printf("TCP message sent to global wmediumd\n");
 			
 			//Receive a reply from the server
-			if(read(sock_w, torecv, sizeof(torecv))< 0)
+			if(recv(sock_w, torecv, sizeof(mystruct_frame), 0)< 0)
 			{
 				puts("TCP recv failed");
 				return 1;
 			}
 			else
-			{
+			{	
+				printf("Tx info received from global wmediumd\n");
 				frame->flags = server_reply.flags_tosend;
 				frame->cookie = server_reply.cookie_tosend;
 				frame->signal = server_reply.signal_tosend;
@@ -1044,7 +1097,6 @@ static void timer_cb(int fd, short what, void *data)
 
 int main(int argc, char *argv[])
 {
-	
 	struct event ev_cmd;
 	struct event ev_timer;
 	struct wmediumd ctx;
@@ -1054,9 +1106,7 @@ int main(int argc, char *argv[])
 	pthread_t thread_n;
 	int sock_tcp = 0, valread, client_fd;
 	struct sockaddr_in serv_addr;
-	
-	
-
+	fprintf(stdout, "Entering local wmediumd\n");
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 
 	if (argc == 1) {
@@ -1167,18 +1217,19 @@ int main(int argc, char *argv[])
 	if (send_register_msg(&ctx) == 0) {
 		w_logf(&ctx, LOG_NOTICE, "REGISTER SENT!\n");
 	}
-
+	fprintf(stdout, "Start wserver\n");
 	if (start_server == true)
 		start_wserver(&ctx);
 		
 	ctx_to_pass = &ctx;
-	
+	sleep(10);
 	pthread_create(&thread_n, NULL, rx_cmd_frame, NULL);
-	pthread_join(thread_n, NULL);
+	fprintf(stdout, "Joining thread for UDP socket\n");
+	//pthread_join(thread_n, NULL);
 	/*Socket client opens*/
 	if ((sock_tcp = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		printf("\n Socket TCP creation error \n");
-		return -1;
+		//return -1;
 	}
 	
 	socket_to_global = sock_tcp;
@@ -1188,29 +1239,30 @@ int main(int argc, char *argv[])
 
 	// Convert IPv4 and IPv6 addresses from text to binary
 	// form
-	if (inet_pton(AF_INET, "10.0.0.2", &serv_addr.sin_addr)
+	if (inet_pton(AF_INET, "192.168.1.3", &serv_addr.sin_addr)
 		<= 0) {
 		printf(
 			"\nInvalid address/ Address not supported \n");
-		return -1;
+		//return -1;
 	}
-
+	fprintf(stdout, "Connecting to global wmediumd...\n");
 	if ((client_fd
 		= connect(sock_tcp, (struct sockaddr*)&serv_addr,
 				sizeof(serv_addr)))
 		< 0) {
-		printf("\nConnection Failed \n");
-		return -1;
+		printf("\nConnection TCP Failed \n");
+		//return -1;
 	}
-
-	puts("Connected with global wmediumd\n");
+	fprintf(stdout, "Connected to global wmediumd\n");
 
 	/* enter libevent main loop */
 	event_dispatch();
 
 	if (start_server == true)
 		stop_wserver();
-
+	fprintf(stdout, "before join\n");
+	pthread_join(thread_n, NULL);
+	fprintf(stdout, "after join\n");
 	free(ctx.sock);
 	free(ctx.cb);
 	free(ctx.intf);
